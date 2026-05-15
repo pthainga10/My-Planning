@@ -1,0 +1,1669 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard Công Việc — Nga Phan</title>
+  <style>
+    :root {
+      --bg: #0b0f1a;
+      --surf: #141924;
+      --surf2: #1c2333;
+      --border: #252d3d;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --accent: #6366f1;
+      --done: #22c55e;
+      --overdue: #ef4444;
+      --urgent: #f97316;
+      --soon: #f59e0b;
+      --inprog: #3b82f6;
+      --none: #475569;
+      --c-cc: #f97316;
+      --c-tech: #6366f1;
+      --c-brand: #ec4899;
+      --c-cpa: #14b8a6;
+      --c-nvs: #8b5cf6;
+      --c-rule: #ef4444;
+      --c-book: #84cc16;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100vh
+    }
+
+    /* ── HEADER ── */
+    .hdr {
+      background: #111827;
+      border-bottom: 1px solid var(--border);
+      padding: 12px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200
+    }
+
+    .hdr-l {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .hdr-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--accent), #8b5cf6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0
+    }
+
+    .hdr-title {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: -.3px
+    }
+
+    .hdr-sub {
+      font-size: 11px;
+      color: var(--muted)
+    }
+
+    .hdr-r {
+      display: flex;
+      align-items: center;
+      gap: 10px
+    }
+
+    .sync-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      border: 1px solid var(--border);
+      background: var(--surf)
+    }
+
+    .sync-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    .sync-dot.live {
+      background: var(--done);
+      animation: blink 2s infinite
+    }
+
+    .sync-dot.cached {
+      background: var(--muted)
+    }
+
+    @keyframes blink {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: .4
+      }
+    }
+
+    .btn {
+      padding: 6px 12px;
+      border-radius: 7px;
+      border: 1px solid var(--border);
+      background: var(--surf2);
+      color: var(--text);
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      transition: all .15s;
+      font-family: inherit
+    }
+
+    .btn:hover {
+      background: var(--accent);
+      border-color: var(--accent)
+    }
+
+    .btn.spinning svg {
+      animation: spin .8s linear infinite
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg)
+      }
+    }
+
+    /* ── ALERT ── */
+    .alert {
+      padding: 8px 20px;
+      background: rgba(249, 115, 22, .1);
+      border-bottom: 1px solid rgba(249, 115, 22, .25);
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .alert.hidden {
+      display: none
+    }
+
+    .alert-pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--urgent);
+      animation: blink 1.2s infinite;
+      flex-shrink: 0
+    }
+
+    /* ── CONTAINER ── */
+    .wrap {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 16px 20px
+    }
+
+    /* ── STATS ── */
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-bottom: 16px
+    }
+
+    .s-card {
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px;
+      cursor: pointer;
+      transition: all .15s;
+      position: relative;
+      overflow: hidden
+    }
+
+    .s-card::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--c, var(--accent));
+      border-radius: 10px 10px 0 0
+    }
+
+    .s-card:hover,
+    .s-card.active {
+      border-color: var(--c, var(--accent));
+      background: var(--surf2)
+    }
+
+    .s-num {
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--c, var(--text));
+      line-height: 1
+    }
+
+    .s-lbl {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      margin-top: 3px
+    }
+
+    .s-icon {
+      font-size: 18px;
+      margin-bottom: 6px
+    }
+
+    /* ── CAT BARS ── */
+    .section-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: var(--muted);
+      margin-bottom: 8px
+    }
+
+    .cats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+      margin-bottom: 16px
+    }
+
+    .cat-card {
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      padding: 10px 12px;
+      cursor: pointer;
+      transition: all .15s
+    }
+
+    .cat-card:hover,
+    .cat-card.active {
+      border-color: var(--cc)
+    }
+
+    .cat-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 7px
+    }
+
+    .cat-name {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 11px;
+      font-weight: 600
+    }
+
+    .cat-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--cc);
+      flex-shrink: 0
+    }
+
+    .cat-right {
+      font-size: 10px;
+      color: var(--muted)
+    }
+
+    .cat-bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden
+    }
+
+    .cat-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: var(--cc);
+      transition: width .5s ease
+    }
+
+    .cat-pct {
+      font-size: 10px;
+      color: var(--muted);
+      margin-top: 4px
+    }
+
+    /* ── CONTROLS ── */
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 12px;
+      flex-wrap: wrap
+    }
+
+    .search-wrap {
+      position: relative;
+      flex: 1;
+      min-width: 180px
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 9px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+      font-size: 12px
+    }
+
+    .search {
+      width: 100%;
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 7px 10px 7px 28px;
+      color: var(--text);
+      font-size: 12px;
+      outline: none;
+      font-family: inherit;
+      transition: border-color .15s
+    }
+
+    .search:focus {
+      border-color: var(--accent)
+    }
+
+    .pills {
+      display: flex;
+      gap: 5px;
+      flex-wrap: wrap
+    }
+
+    .pill {
+      padding: 5px 10px;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      background: var(--surf);
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all .15s;
+      white-space: nowrap
+    }
+
+    .pill:hover {
+      color: var(--text);
+      border-color: var(--muted)
+    }
+
+    .pill.on {
+      background: var(--pc, var(--accent));
+      border-color: var(--pc, var(--accent));
+      color: #fff
+    }
+
+    .sort-sel {
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      padding: 6px 8px;
+      color: var(--text);
+      font-size: 11px;
+      cursor: pointer;
+      outline: none;
+      font-family: inherit
+    }
+
+    /* ── TABLE WRAP ── */
+    .tbl-wrap {
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden
+    }
+
+    .tbl-top {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between
+    }
+
+    .tbl-top-l {
+      display: flex;
+      align-items: center;
+      gap: 8px
+    }
+
+    .result-ct {
+      font-size: 11px;
+      color: var(--muted)
+    }
+
+    /* ── LEVEL BUTTONS (Excel style) ── */
+    .level-btns {
+      display: flex;
+      gap: 3px;
+      align-items: center
+    }
+
+    .level-lbl {
+      font-size: 10px;
+      color: var(--muted);
+      margin-right: 2px
+    }
+
+    .lvl-btn {
+      width: 20px;
+      height: 20px;
+      border-radius: 4px;
+      border: 1px solid var(--border);
+      background: var(--surf2);
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s;
+      font-family: inherit
+    }
+
+    .lvl-btn:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff
+    }
+
+    .lvl-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff
+    }
+
+    /* ── TABLE ── */
+    .tbl-scroll {
+      overflow-x: auto
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse
+    }
+
+    thead th {
+      padding: 8px 12px;
+      text-align: left;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: var(--muted);
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid rgba(37, 45, 61, .6);
+      transition: background .1s
+    }
+
+    tbody tr:last-child {
+      border-bottom: none
+    }
+
+    tbody tr:hover {
+      background: var(--surf2)
+    }
+
+    td {
+      padding: 7px 12px;
+      vertical-align: middle
+    }
+
+    /* Group toggle cell */
+    .toggle-cell {
+      width: 28px;
+      padding: 7px 4px 7px 12px
+    }
+
+    .grp-toggle {
+      width: 16px;
+      height: 16px;
+      border-radius: 3px;
+      border: 1px solid var(--border);
+      background: var(--surf2);
+      color: var(--muted);
+      font-size: 9px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .15s;
+      font-family: inherit;
+      flex-shrink: 0;
+    }
+
+    .grp-toggle:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff
+    }
+
+    .grp-toggle.expanded {
+      background: rgba(99, 102, 241, .15);
+      border-color: var(--accent);
+      color: var(--accent)
+    }
+
+    .no-toggle {
+      width: 16px;
+      display: inline-block
+    }
+
+    /* Parent vs child row styling */
+    tr.is-parent td {
+      font-weight: 600
+    }
+
+    tr.is-parent td.task-name-cell {
+      font-weight: 600
+    }
+
+    tr.is-child td.task-name-cell {
+      color: #cbd5e1;
+      padding-left: 22px
+    }
+
+    tr.is-child td.task-name-cell::before {
+      content: '↳ ';
+      color: var(--muted);
+      font-size: 11px
+    }
+
+    /* Status badge */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 500;
+      white-space: nowrap
+    }
+
+    .bd-done {
+      background: rgba(34, 197, 94, .12);
+      color: var(--done);
+      border: 1px solid rgba(34, 197, 94, .25)
+    }
+
+    .bd-overdue {
+      background: rgba(239, 68, 68, .12);
+      color: #fca5a5;
+      border: 1px solid rgba(239, 68, 68, .25)
+    }
+
+    .bd-urgent {
+      background: rgba(249, 115, 22, .12);
+      color: var(--urgent);
+      border: 1px solid rgba(249, 115, 22, .25)
+    }
+
+    .bd-soon {
+      background: rgba(245, 158, 11, .12);
+      color: var(--soon);
+      border: 1px solid rgba(245, 158, 11, .25)
+    }
+
+    .bd-inprog {
+      background: rgba(59, 130, 246, .12);
+      color: var(--inprog);
+      border: 1px solid rgba(59, 130, 246, .25)
+    }
+
+    .bd-none {
+      background: rgba(71, 85, 105, .15);
+      color: #94a3b8;
+      border: 1px solid rgba(71, 85, 105, .25)
+    }
+
+    /* Cat tag */
+    .ctag {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 7px;
+      border-radius: 5px;
+      font-size: 10px;
+      font-weight: 500;
+      background: rgba(255, 255, 255, .04)
+    }
+
+    .ctag-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      flex-shrink: 0
+    }
+
+    /* Priority */
+    .prio {
+      width: 18px;
+      height: 18px;
+      border-radius: 4px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700
+    }
+
+    .p1 {
+      background: rgba(239, 68, 68, .18);
+      color: #fca5a5
+    }
+
+    .p2 {
+      background: rgba(245, 158, 11, .18);
+      color: var(--soon)
+    }
+
+    .p3 {
+      background: rgba(99, 102, 241, .18);
+      color: #a5b4fc
+    }
+
+    .p4 {
+      background: rgba(71, 85, 105, .18);
+      color: var(--muted)
+    }
+
+    /* Deadline */
+    .dl {
+      font-size: 11px
+    }
+
+    .dl-over {
+      color: #fca5a5;
+      font-weight: 600
+    }
+
+    .dl-urg {
+      color: var(--urgent);
+      font-weight: 600
+    }
+
+    .dl-soon {
+      color: var(--soon)
+    }
+
+    .dl-norm {
+      color: var(--muted)
+    }
+
+    .dl-days {
+      font-size: 10px;
+      opacity: .8
+    }
+
+    /* Note */
+    .note {
+      font-size: 11px;
+      color: var(--muted);
+      font-style: italic;
+      max-width: 180px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis
+    }
+
+    /* Empty */
+    .empty {
+      padding: 40px;
+      text-align: center;
+      color: var(--muted)
+    }
+
+    /* ── MODAL ── */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, .55);
+      backdrop-filter: blur(4px);
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity .2s
+    }
+
+    .overlay.show {
+      opacity: 1;
+      pointer-events: all
+    }
+
+    .modal {
+      background: var(--surf);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+      width: 460px;
+      max-width: 90vw;
+      transform: translateY(8px);
+      transition: transform .2s;
+      position: relative
+    }
+
+    .overlay.show .modal {
+      transform: translateY(0)
+    }
+
+    .m-close {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      background: none;
+      border: none;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1
+    }
+
+    .m-title {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 3px;
+      padding-right: 24px
+    }
+
+    .m-cat {
+      margin-bottom: 14px
+    }
+
+    .m-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: flex-start
+    }
+
+    .m-lbl {
+      font-size: 10px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      min-width: 70px;
+      padding-top: 2px
+    }
+
+    .m-val {
+      font-size: 12px
+    }
+
+    .m-note {
+      background: var(--surf2);
+      border-radius: 7px;
+      padding: 9px 11px;
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 10px;
+      font-style: italic;
+      line-height: 1.5
+    }
+
+    /* ── SETUP NOTICE ── */
+    .setup-bar {
+      background: rgba(99, 102, 241, .1);
+      border: 1px solid rgba(99, 102, 241, .3);
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 14px;
+      font-size: 11px;
+      display: none;
+      align-items: flex-start;
+      gap: 10px
+    }
+
+    .setup-bar.show {
+      display: none;
+      /* Changed: Don't show by default as per user request */
+    }
+
+    .setup-bar strong {
+      color: #a5b4fc
+    }
+
+    .setup-steps {
+      list-style: none;
+      margin-top: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px
+    }
+
+    .setup-steps li::before {
+      content: '→ ';
+      color: var(--accent)
+    }
+
+    /* ── RESPONSIVE ── */
+    @media(max-width:900px) {
+      .stats {
+        grid-template-columns: repeat(3, 1fr)
+      }
+
+      .cats {
+        grid-template-columns: repeat(2, 1fr)
+      }
+    }
+
+    @media(max-width:580px) {
+      .stats {
+        grid-template-columns: repeat(2, 1fr)
+      }
+
+      .cats {
+        grid-template-columns: 1fr 1fr
+      }
+
+      .wrap {
+        padding: 10px
+      }
+    }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg)
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 3px
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--muted)
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-l">
+      <div class="hdr-logo">📋</div>
+      <div>
+        <div class="hdr-title">Dashboard Công Việc</div>
+        <div class="hdr-sub">Nga Phan · Project Coordinator</div>
+      </div>
+    </div>
+    <div class="hdr-r">
+      <div class="sync-badge">
+        <div class="sync-dot cached" id="syncDot"></div>
+        <span id="syncLabel">Đang tải...</span>
+      </div>
+      <button class="btn" id="btnRefresh" onclick="reloadData()">
+        <svg id="refreshIcon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+          stroke-width="2.5">
+          <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+          <path d="M21 3v5h-5" />
+          <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+          <path d="M8 16H3v5" />
+        </svg>
+        Làm mới
+      </button>
+    </div>
+  </div>
+
+  <!-- ALERT -->
+  <div class="alert hidden" id="alertBar">
+    <div class="alert-pulse"></div>
+    <span id="alertText"></span>
+  </div>
+
+  <!-- MAIN -->
+  <div class="wrap">
+
+    <!-- SETUP NOTICE -->
+    <div class="setup-bar" id="setupBar">
+      <div>
+        <strong>🔌 Kết nối Google Sheets để tự động cập nhật</strong>
+        <ul class="setup-steps">
+          <li>Mở Google Sheet → <strong>Share</strong> → chọn <strong>"Anyone with the link"</strong> (View)</li>
+          <li>Mở file HTML này qua VS Code <strong>Live Server</strong> hoặc server local (không mở trực tiếp bằng
+            file://)</li>
+          <li>Bấm <strong>Làm mới</strong> — dữ liệu sẽ được tải trực tiếp từ Google Sheets</li>
+        </ul>
+      </div>
+      <button onclick="document.getElementById('setupBar').classList.remove('show')"
+        style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;flex-shrink:0;align-self:flex-start">✕</button>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats" id="statsGrid"></div>
+
+    <!-- CATEGORY BARS -->
+    <div class="section-label">Tiến độ theo hạng mục</div>
+    <div class="cats" id="catsGrid"></div>
+
+    <!-- CONTROLS -->
+    <div class="controls">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input class="search" id="searchBox" placeholder="Tìm kiếm công việc..." oninput="applyFilters()">
+      </div>
+      <div class="pills" id="pillBar">
+        <div class="pill on" data-s="all" style="--pc:var(--accent)" onclick="setPill(this)">Tất cả</div>
+        <div class="pill" data-s="done" style="--pc:var(--done)" onclick="setPill(this)">✅ Xong</div>
+        <div class="pill" data-s="overdue" style="--pc:var(--overdue)" onclick="setPill(this)">🚨 Quá hạn</div>
+        <div class="pill" data-s="inprog" style="--pc:var(--inprog)" onclick="setPill(this)">🔄 Đang làm</div>
+        <div class="pill" data-s="urgent" style="--pc:var(--urgent)" onclick="setPill(this)">🔴 Cấp bách</div>
+        <div class="pill" data-s="soon" style="--pc:var(--soon)" onclick="setPill(this)">🟡 Sắp đến</div>
+        <div class="pill" data-s="none" style="--pc:var(--none)" onclick="setPill(this)">⚪ Chưa làm</div>
+      </div>
+      <select class="sort-sel" id="sortSel" onchange="applyFilters()">
+        <option value="default">Mặc định</option>
+        <option value="dl-asc">Deadline ↑</option>
+        <option value="dl-desc">Deadline ↓</option>
+        <option value="prio">Ưu tiên ↑</option>
+        <option value="status">Trạng thái</option>
+      </select>
+    </div>
+
+    <!-- TABLE -->
+    <div class="tbl-wrap">
+      <div class="tbl-top">
+        <div class="tbl-top-l">
+          <!-- Excel-style level buttons -->
+          <div class="level-btns">
+            <span class="level-lbl">Cấp:</span>
+            <button class="lvl-btn active" id="lvl1" onclick="setLevel(1)" title="Thu gọn tất cả (Level 1)">1</button>
+            <button class="lvl-btn" id="lvl2" onclick="setLevel(2)" title="Mở rộng tất cả (Level 2)">2</button>
+          </div>
+          <span class="result-ct" id="resultCt"></span>
+        </div>
+      </div>
+      <div class="tbl-scroll">
+        <table>
+          <thead>
+            <tr>
+              <th class="toggle-cell"></th>
+              <th style="min-width:220px">Công việc</th>
+              <th style="min-width:100px">Hạng mục</th>
+              <th style="min-width:130px">Trạng thái</th>
+              <th style="min-width:110px">Deadline</th>
+              <th style="width:48px">Ưu tiên</th>
+              <th style="min-width:160px">Ghi chú</th>
+            </tr>
+          </thead>
+          <tbody id="tblBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- MODAL -->
+  <div class="overlay" id="overlay" onclick="closeModal(event)">
+    <div class="modal">
+      <button class="m-close" onclick="closeModal()">✕</button>
+      <div class="m-title" id="mTitle"></div>
+      <div class="m-cat" id="mCat"></div>
+      <div class="m-row"><span class="m-lbl">Trạng thái</span><span id="mStatus"></span></div>
+      <div class="m-row"><span class="m-lbl">Deadline</span><span class="m-val" id="mDl"></span></div>
+      <div class="m-row"><span class="m-lbl">Ưu tiên</span><span class="m-val" id="mPrio"></span></div>
+      <div id="mNote" class="m-note" style="display:none"></div>
+    </div>
+  </div>
+
+  <script>
+    /* ════════════════════════════════════════════════════════
+       CONFIG
+    ════════════════════════════════════════════════════════ */
+    const SHEET_ID = '1Y9_3PugjUbyu5_ej9YBOd0CfcYJskS8rd5m1V2qyDik';
+    const GID = '1397376272';
+
+    const CAT_META = {
+      'Coco Chicken': { color: '#f97316', icon: '🍗' },
+      'Công nghệ': { color: '#6366f1', icon: '💻' },
+      'Thương hiệu': { color: '#ec4899', icon: '🌟' },
+      'CPA': { color: '#14b8a6', icon: '📚' },
+      'NVS': { color: '#8b5cf6', icon: '🏗️' },
+      'Quy định': { color: '#ef4444', icon: '⚖️' },
+      'Sách': { color: '#84cc16', icon: '📖' },
+      'Tu tập': { color: '#f59e0b', icon: '🙏' },
+    };
+    const KNOWN_CATS = Object.keys(CAT_META);
+    const STATUS_ORDER = { overdue: 0, urgent: 1, soon: 2, inprog: 3, none: 4, done: 5 };
+
+    /* ════════════════════════════════════════════════════════
+       EMBEDDED FALLBACK DATA  (synced: 2026-05-15)
+       Format: [stt|null, lv, phanLoai, hangMuc, deadline|null, uuTien|null, done, ghiChu]
+    ════════════════════════════════════════════════════════ */
+    const EMBEDDED = [
+      // ── Coco Chicken ──────────────────────────────────────
+      [1, 1, 'Coco Chicken', 'Điều lệ', '2026-04-22', 1, true, ''],
+      [2, 1, 'Coco Chicken', 'HĐ cổ đông', '2026-04-22', null, false, ''],
+      [null, 2, 'Coco Chicken', 'Biên bản Thỏa thuận Ghi nhận công sức & Phân chia lợi nhuận', '2026-04-22', 1, true, 'Bản đối ngoại'],
+      [null, 2, 'Coco Chicken', 'Hồ sơ kê khai Chủ sở hữu hưởng lợi (BO) - Mẫu 10, 11', null, null, false, 'Bên DV thực hiện'],
+      [null, 2, 'Coco Chicken', 'Hợp đồng lao động & Phụ lục thưởng KPI (Tầng 1)', null, null, false, 'Chưa thực hiện, GĐ sau'],
+      [null, 2, 'Coco Chicken', 'Thỏa thuận Cổ đông Khung (Master SHA)', null, null, false, 'Chưa thực hiện'],
+      [null, 2, 'Coco Chicken', 'Văn bản Xác nhận Gia nhập (Deed of Adherence)', null, null, false, 'Chưa thực hiện'],
+      [null, 2, 'Coco Chicken', 'Hợp đồng Ủy thác Quản lý tài sản - NHÓM VẬN HÀNH', null, null, false, 'Chưa thực hiện'],
+      [null, 2, 'Coco Chicken', 'Hợp đồng Ủy thác Quản lý tài sản - NHÓM ĐẦU TƯ', null, null, false, 'Chưa thực hiện'],
+      [null, 2, 'Coco Chicken', 'Hợp đồng Ủy quyền biểu quyết (50%)', null, null, false, 'Chưa thực hiện'],
+      [null, 2, 'Coco Chicken', 'Bộ hồ sơ Ký khống (Escrow / Kill Switch)', null, null, false, 'Làm khi cần thiết'],
+      [3, 1, 'Coco Chicken', 'Nhân sự', '2026-05-25', 2, false, ''],
+      [null, 2, 'Coco Chicken', 'HĐ full-time', '2026-05-25', 2, false, ''],
+      [null, 2, 'Coco Chicken', 'HĐ part-time', '2026-05-25', 2, false, ''],
+      [null, 2, 'Coco Chicken', 'Chấm công', null, null, false, ''],
+      [4, 1, 'Coco Chicken', 'Học kế toán', '2026-05-16', 2, false, ''],
+      [null, 2, 'Coco Chicken', 'Phần mềm Misa', null, null, false, ''],
+      [null, 2, 'Coco Chicken', 'Hạch toán', null, null, false, ''],
+      [null, 2, 'Coco Chicken', 'Quy trình kế toán', null, null, false, ''],
+      [null, 2, 'Coco Chicken', 'Thuế', null, null, false, ''],
+      [null, 2, 'Coco Chicken', 'BCTC', null, null, false, ''],
+      [null, 2, 'Coco Chicken', 'Các HS yêu cầu', null, null, false, ''],
+      // ── Công nghệ ─────────────────────────────────────────
+      [5, 1, 'Công nghệ', 'Cập nhật AI', '2026-05-25', 1, false, ''],
+      [null, 2, 'Công nghệ', 'Google Antigravity', null, null, true, ''],
+      [null, 2, 'Công nghệ', 'Claude Agent', null, null, false, ''],
+      [null, 2, 'Công nghệ', 'Claude kết nối với NotebookLM', null, 1, false, '50% đã kết nối'],
+      [null, 2, 'Công nghệ', 'Claude thực hiện với Excel tương tác tạo ra web', null, null, false, ''],
+      [null, 2, 'Công nghệ', 'Claude tự động hóa', null, null, false, ''],
+      [null, 2, 'Công nghệ', 'Ứng dụng cập nhật tự động quy định, tin tức & trend', null, null, false, ''],
+      [null, 2, 'Công nghệ', 'Open Claw', null, null, false, ''],
+      [null, 2, 'Công nghệ', 'n8n', null, null, false, ''],
+      [null, 2, 'Công nghệ', 'Tự động hóa workflow', null, null, false, ''],
+      // ── Thương hiệu ───────────────────────────────────────
+      [6, 1, 'Thương hiệu', 'Xây dựng thương hiệu', null, 3, false, ''],
+      [null, 2, 'Thương hiệu', 'Chọn website mẫu', null, null, false, ''],
+      [null, 2, 'Thương hiệu', 'Xây dựng website', null, null, false, ''],
+      // ── CPA ───────────────────────────────────────────────
+      [7, 1, 'CPA', 'Học CPA', null, 4, false, ''],
+      [null, 2, 'CPA', 'Module 1', null, null, false, ''],
+      [null, 2, 'CPA', 'Module 2', null, null, false, ''],
+      [null, 2, 'CPA', 'Module 3', null, null, false, ''],
+      [null, 2, 'CPA', 'Module 4', null, null, false, ''],
+      [null, 2, 'CPA', 'Module 5', null, null, false, ''],
+      [null, 2, 'CPA', 'Module 6', null, null, false, ''],
+      [null, 2, 'CPA', 'Module 7', null, null, false, ''],
+      // ── NVS ───────────────────────────────────────────────
+      [8, 1, 'NVS', 'Dự án Nam Việt Sanctuary', null, null, false, ''],
+      [null, 2, 'NVS', 'NCTT Bệnh viện, trường học', '2026-05-16', 1, false, ''],
+      [null, 2, 'NVS', 'Suất đầu tư', '2026-05-16', 1, false, ''],
+      [null, 2, 'NVS', 'Mẫu chạy Tiền sử dụng đất', '2026-05-16', 1, false, ''],
+      [null, 2, 'NVS', 'Mẫu chạy Pre-FS', '2026-05-16', 1, false, ''],
+      [null, 2, 'NVS', 'Tổng hợp File BCNCTT & mục lục', '2026-05-18', 1, false, ''],
+      [null, 2, 'NVS', 'Tóm tắt phần ko phải của mình', '2026-05-18', 1, false, ''],
+      // ── Quy định ──────────────────────────────────────────
+      [10, 1, 'Quy định', 'Tìm hiểu quy định', null, null, false, ''],
+      [null, 2, 'Quy định', 'Thuế chuyển nhượng vốn (TNHH, CP) dưới dạng cá nhân & Công ty', '2026-05-15', 1, false, ''],
+      [null, 2, 'Quy định', 'Thuế định giá lại tài sản', null, null, false, ''],
+      [null, 2, 'Quy định', 'Vấn đề về chuyển nhượng CL giá vốn & CL VĐL', null, null, false, ''],
+      // ── Sách ──────────────────────────────────────────────
+      [11, 1, 'Sách', 'Đọc sách', null, null, false, ''],
+      [null, 2, 'Sách', 'Sách 2030', null, 3, false, ''],
+      [null, 2, 'Sách', 'Sách sức mạnh của sự dịu dàng', null, 3, false, ''],
+      // ── Tu tập ────────────────────────────────────────────
+      [1, 1, 'Tu tập', 'Tu tập', null, null, false, ''],
+      [null, 2, 'Tu tập', 'Tìm hiểu về Mẹ Tara Xanh', null, 1, false, ''],
+      [null, 2, 'Tu tập', 'Đọc 108 biến Chú Đại Bi', null, null, false, ''],
+    ];
+
+    /* ════════════════════════════════════════════════════════
+       STATE
+    ════════════════════════════════════════════════════════ */
+    let TASKS = [];           // processed task objects
+    let expandedGroups = new Set(); // groupIds currently expanded
+    let globalLevel = 1;     // 1 = collapsed, 2 = expanded
+    let filterStatus = 'all';
+    let filterCat = 'all';
+    let modalTask = null;
+    let isLive = false;
+
+    /* ════════════════════════════════════════════════════════
+       TASK PROCESSING
+    ════════════════════════════════════════════════════════ */
+    function buildTasks(raw) {
+      let gid = 0;
+      let autoGid = 0;
+      return raw.map(r => {
+        const sttRaw = r[0];
+        const lvRaw = r[1];
+
+        const isLv1 = lvRaw === 1 || lvRaw === '1' || lvRaw === 1.0;
+        const isLv2 = lvRaw === 2 || lvRaw === '2' || lvRaw === 2.0;
+
+        if (isLv1 || ((sttRaw !== null && sttRaw !== undefined && sttRaw !== '') && !isLv2)) {
+          if (sttRaw !== null && sttRaw !== undefined && sttRaw !== '') {
+            gid = typeof sttRaw === 'number' ? sttRaw : parseInt(sttRaw);
+          } else {
+            autoGid++;
+            gid = 'auto_' + autoGid;
+          }
+        }
+
+        const isParent = isLv1 || ((sttRaw !== null && sttRaw !== undefined && sttRaw !== '') && !isLv2);
+
+        return {
+          stt: (sttRaw !== null && sttRaw !== undefined && sttRaw !== '') ? (typeof sttRaw === 'number' ? sttRaw : parseInt(sttRaw)) : null,
+          phanLoai: r[2] || '',
+          hangMuc: r[3] || '',
+          deadline: r[4] || null,
+          uuTien: r[5] ? parseInt(r[5]) : null,
+          done: r[6] === true,
+          ghiChu: r[7] || '',
+          isParent: isParent,
+          groupId: gid,
+        };
+      }).filter(t => t.hangMuc);
+    }
+
+    function isActualTask(t) {
+      // Logic: A task is counted if it's a child (Lv 2) OR it's a parent (Lv 1) that has NO children
+      if (!t.isParent) return true;
+      const hasChildren = TASKS.some(c => !c.isParent && c.groupId === t.groupId);
+      return !hasChildren;
+    }
+
+    function getStatus(t) {
+      if (t.done) return 'done';
+      if (!t.deadline) return 'none';
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const dl = new Date(t.deadline); dl.setHours(0, 0, 0, 0);
+      const diff = Math.ceil((dl - today) / 86400000);
+      if (diff < 0) return 'overdue';
+      if (diff <= 3) return 'urgent';
+      if (diff <= 7) return 'soon';
+      return 'inprog';
+    }
+
+    /* ════════════════════════════════════════════════════════
+       GOOGLE SHEETS LIVE FETCH
+    ════════════════════════════════════════════════════════ */
+    async function fetchLive() {
+      // Use CSV export instead of gviz/tq because gviz skips collapsed/hidden rows.
+      // CSV export always returns the full data.
+      const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/export?format=csv&gid=${GID}&tcb=${Date.now()}`;
+      const resp = await fetch(url, { mode: 'cors' });
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const text = await resp.text();
+      return parseCsv(text);
+    }
+
+    function parseCsv(csv) {
+      const rows = [];
+      let current = '';
+      let inQuotes = false;
+      let row = [];
+
+      // Simple but effective CSV parser
+      for (let i = 0; i < csv.length; i++) {
+        const char = csv[i];
+        const next = csv[i + 1];
+        if (char === '"') {
+          if (inQuotes && next === '"') { current += '"'; i++; }
+          else { inQuotes = !inQuotes; }
+        } else if (char === ',' && !inQuotes) {
+          row.push(current);
+          current = '';
+        } else if ((char === '\r' || char === '\n') && !inQuotes) {
+          if (current !== '' || row.length > 0) {
+            row.push(current);
+            rows.push(row);
+          }
+          current = '';
+          row = [];
+          if (char === '\r' && next === '\n') i++;
+        } else {
+          current += char;
+        }
+      }
+      if (current !== '' || row.length > 0) {
+        row.push(current);
+        rows.push(row);
+      }
+
+      let headerIdx = -1;
+      let colMap = {};
+
+      // Find header row by locating "Stt" or "Phân loại" or "Lv"
+      for (let i = 0; i < rows.length; i++) {
+        const cells = rows[i];
+        const sIdx = cells.findIndex(c => c.trim().toLowerCase() === 'stt');
+        const pIdx = cells.findIndex(c => c.trim().toLowerCase() === 'phân loại');
+
+        if (sIdx >= 0 || pIdx >= 0) {
+          headerIdx = i;
+          const targetIdx = sIdx >= 0 ? sIdx : pIdx;
+          // Map based on relative positions
+          colMap['Stt'] = targetIdx;
+          if (sIdx >= 0) {
+            // If we found 'Stt', assume standard sequence
+            cells.forEach((c, j) => { if (c.trim()) colMap[c.trim()] = j; });
+          } else {
+            // Fallback if only 'Phân loại' found
+            colMap['Stt'] = pIdx - 2;
+            colMap['Lv'] = pIdx - 1;
+            colMap['Phân loại'] = pIdx;
+            colMap['Hạng mục'] = pIdx + 1;
+            colMap['Deadline'] = pIdx + 3;
+            colMap['Ưu tiên'] = pIdx + 4;
+            colMap['Hoàn thành'] = pIdx + 5;
+            colMap['Ghi chú'] = pIdx + 6;
+          }
+          break;
+        }
+      }
+
+      if (headerIdx < 0) return null;
+
+      const ci = {
+        stt: colMap['Stt'] ?? 0,
+        lv: colMap['Lv'] ?? colMap['lv'] ?? 1,
+        pl: colMap['Phân loại'] ?? colMap['phân loại'] ?? 2,
+        hm: colMap['Hạng mục'] ?? colMap['hạng mục'] ?? 3,
+        dl: colMap['Deadline'] ?? colMap['deadline'] ?? 5,
+        ut: colMap['Ưu tiên'] ?? colMap['ưu tiên'] ?? 6,
+        ht: colMap['Hoàn thành'] ?? colMap['hoàn thành'] ?? 7,
+        gc: colMap['Ghi chú'] ?? colMap['ghi chú'] ?? 8,
+      };
+
+      const result = [];
+      for (let i = headerIdx + 1; i < rows.length; i++) {
+        const cells = rows[i];
+        const phanLoai = cells[ci.pl]?.trim() || '';
+        const hangMuc = cells[ci.hm]?.trim() || '';
+
+        if (!phanLoai && (hangMuc.startsWith('HD') || hangMuc.startsWith('A.') || hangMuc.startsWith('Code'))) break;
+        if (!hangMuc && !phanLoai) continue;
+        if (!hangMuc) continue;
+
+        const sttRaw = cells[ci.stt]?.trim();
+        const stt = sttRaw && /^\d+$/.test(sttRaw) ? parseInt(sttRaw) : null;
+
+        // In CSV from Google Sheets, dates are usually strings "MM/DD/YYYY" or "YYYY-MM-DD"
+        let deadline = null;
+        const dlRaw = cells[ci.dl]?.trim() || '';
+        if (dlRaw) {
+          const mdy = dlRaw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+          if (mdy) {
+            // Map MM/DD/YYYY to YYYY-MM-DD
+            deadline = `${mdy[3]}-${mdy[1].padStart(2, '0')}-${mdy[2].padStart(2, '0')}`;
+          } else if (/^\d{4}-\d{2}-\d{2}$/.test(dlRaw)) {
+            deadline = dlRaw;
+          }
+        }
+
+        const utRaw = cells[ci.ut]?.trim();
+        const uuTien = utRaw && /^\d+$/.test(utRaw) ? parseInt(utRaw) : null;
+        const done = cells[ci.ht]?.trim().toUpperCase() === 'X';
+        const ghiChu = cells[ci.gc]?.trim() || '';
+
+        // Get Lv for buildTasks
+        const lvRaw = cells[ci.lv]?.trim();
+        const lv = lvRaw ? parseInt(lvRaw) : 1;
+
+        // [stt, lv, phanLoai, hangMuc, deadline, uuTien, done, ghiChu]
+        result.push([stt, lv, phanLoai, hangMuc, deadline, uuTien, done, ghiChu]);
+      }
+      return result;
+    }
+
+    function rowCells(row) {
+      return (row.c || []).map(c => {
+        if (!c) return '';
+        if (c.f) return c.f;
+        if (c.v === null || c.v === undefined) return '';
+        return String(c.v);
+      });
+    }
+
+    /* ════════════════════════════════════════════════════════
+       LOAD & INIT
+    ════════════════════════════════════════════════════════ */
+    async function reloadData() {
+      const btn = document.getElementById('btnRefresh');
+      const ico = document.getElementById('refreshIcon');
+      btn.classList.add('spinning');
+
+      let raw = null;
+      try {
+        raw = await fetchLive();
+        isLive = !!(raw && raw.length);
+      } catch (e) {
+        console.error('Fetch error:', e);
+        isLive = false;
+        const syncLabel = document.getElementById('syncLabel');
+        syncLabel.innerHTML = `⚠️ Lỗi kết nối: ${e.message} (Đang dùng dữ liệu lưu trữ)`;
+        syncLabel.style.color = 'var(--overdue)';
+
+        if (window.location.protocol === 'file:') {
+          alert('Cảnh báo: Bạn đang mở file trực tiếp (file://). \nVui lòng sử dụng Live Server trong VS Code để tránh lỗi bảo mật (CORS) khi tải dữ liệu từ Google Sheets.');
+        }
+      }
+      btn.classList.remove('spinning');
+
+      if (!raw || !raw.length) {
+        raw = EMBEDDED;
+        setSyncLabel(false);
+        // Removed: document.getElementById('setupBar').classList.add('show');
+      } else {
+        setSyncLabel(true);
+      }
+
+      TASKS = buildTasks(raw);
+      expandedGroups.clear();
+      renderAll();
+    }
+
+    function setSyncLabel(live) {
+      const dot = document.getElementById('syncDot');
+      const label = document.getElementById('syncLabel');
+      if (live) {
+        dot.className = 'sync-dot live';
+        label.textContent = '🟢 LIVE từ Google Sheets · ' + fmtNow();
+      } else {
+        dot.className = 'sync-dot cached';
+        label.textContent = '⚫ Dữ liệu lưu trữ · 15/05/2026';
+      }
+    }
+
+    function fmtNow() {
+      const d = new Date();
+      return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    }
+
+    /* ════════════════════════════════════════════════════════
+       RENDER ALL
+    ════════════════════════════════════════════════════════ */
+    function renderAll() {
+      renderStats();
+      renderCats();
+      renderAlert();
+      applyFilters();
+    }
+
+    /* ── STATS ── */
+    function renderStats() {
+      const activeTasks = TASKS.filter(isActualTask);
+      const total = activeTasks.length;
+      const done = activeTasks.filter(t => getStatus(t) === 'done').length;
+      const urgent = activeTasks.filter(t => getStatus(t) === 'urgent').length;
+      const overdue = activeTasks.filter(t => getStatus(t) === 'overdue').length;
+      const inprog = activeTasks.filter(t => ['inprog', 'soon'].includes(getStatus(t))).length;
+
+      document.getElementById('statsGrid').innerHTML = `
+    <div class="s-card" style="--c:var(--text)" onclick="setPillByStatus('all')">
+      <div class="s-icon">📊</div><div class="s-num">${total}</div><div class="s-lbl">Tổng công việc</div>
+    </div>
+    <div class="s-card" style="--c:var(--done)" onclick="setPillByStatus('done')">
+      <div class="s-icon">✅</div><div class="s-num">${done}</div><div class="s-lbl">Hoàn thành</div>
+    </div>
+    <div class="s-card" style="--c:var(--urgent)" onclick="setPillByStatus('urgent')">
+      <div class="s-icon">🔴</div><div class="s-num">${urgent}</div><div class="s-lbl">Cấp bách ≤3 ngày</div>
+    </div>
+    <div class="s-card" style="--c:var(--overdue)" onclick="setPillByStatus('overdue')">
+      <div class="s-icon">🚨</div><div class="s-num">${overdue}</div><div class="s-lbl">Quá hạn</div>
+    </div>
+    <div class="s-card" style="--c:var(--inprog)" onclick="setPillByStatus('inprog')">
+      <div class="s-icon">🔄</div><div class="s-num">${inprog}</div><div class="s-lbl">Đang thực hiện</div>
+    </div>`;
+    }
+
+    /* ── CATEGORY BARS ── */
+    function renderCats() {
+      const grid = document.getElementById('catsGrid');
+      grid.innerHTML = '';
+      KNOWN_CATS.forEach(cat => {
+        const meta = CAT_META[cat];
+        const tasks = TASKS.filter(t => t.phanLoai === cat && isActualTask(t));
+        const done = tasks.filter(t => getStatus(t) === 'done').length;
+        const pct = tasks.length ? Math.round(done / tasks.length * 100) : 0;
+        const urgent = tasks.filter(t => ['urgent', 'overdue'].includes(getStatus(t))).length;
+        const card = document.createElement('div');
+        card.className = 'cat-card';
+        card.style.setProperty('--cc', meta.color);
+        card.innerHTML = `
+      <div class="cat-top">
+        <div class="cat-name"><div class="cat-dot"></div>${meta.icon} ${cat}</div>
+        <div class="cat-right">${done}/${tasks.length}${urgent ? ` <span style="color:var(--urgent)">⚠️${urgent}</span>` : ''}</div>
+      </div>
+      <div class="cat-bar"><div class="cat-fill" style="width:${pct}%;background:${meta.color}"></div></div>
+      <div class="cat-pct">${pct}% hoàn thành</div>`;
+        card.onclick = () => {
+          filterCat = (filterCat === cat) ? 'all' : cat;
+          document.querySelectorAll('.cat-card').forEach(c => c.classList.remove('active'));
+          if (filterCat !== 'all') card.classList.add('active');
+          applyFilters();
+        };
+        grid.appendChild(card);
+      });
+    }
+
+    /* ── ALERT ── */
+    function renderAlert() {
+      const critical = TASKS.filter(t => ['urgent', 'overdue'].includes(getStatus(t)));
+      const bar = document.getElementById('alertBar');
+      if (!critical.length) { bar.classList.add('hidden'); return; }
+      bar.classList.remove('hidden');
+      document.getElementById('alertText').innerHTML =
+        `<strong>${critical.length} công việc</strong> cần xử lý khẩn — ` +
+        critical.slice(0, 3).map(t => `<em>${t.hangMuc}</em>`).join(', ') +
+        (critical.length > 3 ? ` và ${critical.length - 3} task khác` : '');
+    }
+
+    /* ════════════════════════════════════════════════════════
+       FILTERS + TABLE RENDER
+    ════════════════════════════════════════════════════════ */
+    function applyFilters() {
+      const q = document.getElementById('searchBox').value.toLowerCase().trim();
+      const sortVal = document.getElementById('sortSel').value;
+
+      // 1. Identify which items directly match the filters
+      const directMatches = TASKS.filter(t => {
+        const statOk = filterStatus === 'all' || getStatus(t) === filterStatus;
+        const catOk = filterCat === 'all' || t.phanLoai === filterCat;
+        const srchOk = !q || t.hangMuc.toLowerCase().includes(q)
+          || t.phanLoai.toLowerCase().includes(q)
+          || (t.ghiChu && t.ghiChu.toLowerCase().includes(q));
+        return statOk && catOk && srchOk;
+      });
+
+      const matchedGids = new Set(directMatches.map(t => t.groupId));
+
+      // 2. Construct final list: keep original order, include matches + parents of matches
+      let final = [];
+      if (filterStatus === 'all' && filterCat === 'all' && !q && sortVal === 'default') {
+        final = [...TASKS];
+      } else {
+        final = TASKS.filter(t => {
+          const isDirect = directMatches.includes(t);
+          const isParentOfMatch = t.isParent && matchedGids.has(t.groupId);
+          return isDirect || isParentOfMatch;
+        });
+      }
+
+      // 3. Sorting (Warning: sorting across groups breaks hierarchy)
+      if (sortVal !== 'default') {
+        if (sortVal === 'dl-asc') {
+          final.sort((a, b) => (!a.deadline ? 1 : !b.deadline ? -1 : a.deadline.localeCompare(b.deadline)));
+        } else if (sortVal === 'dl-desc') {
+          final.sort((a, b) => (!a.deadline ? -1 : !b.deadline ? 1 : b.deadline.localeCompare(a.deadline)));
+        } else if (sortVal === 'prio') {
+          final.sort((a, b) => (a.uuTien || 99) - (b.uuTien || 99));
+        } else if (sortVal === 'status') {
+          final.sort((a, b) => (STATUS_ORDER[getStatus(a)] || 9) - (STATUS_ORDER[getStatus(b)] || 9));
+        }
+      }
+
+      renderTable(final);
+    }
+
+    /* ── TABLE ── */
+    function renderTable(list) {
+      const tbody = document.getElementById('tblBody');
+      document.getElementById('resultCt').textContent = `${list.length} công việc`;
+
+      if (!list.length) {
+        tbody.innerHTML = `<tr><td colspan="7"><div class="empty">🔍 Không tìm thấy công việc phù hợp</div></td></tr>`;
+        return;
+      }
+
+      const rows = [];
+      // Group the list by groupId to respect grouping structure
+      list.forEach(t => {
+        const status = getStatus(t);
+        const expanded = globalLevel === 2 || expandedGroups.has(t.groupId);
+
+        // For child rows: skip if group is collapsed
+        if (!t.isParent && !expanded) return;
+
+        const catM = CAT_META[t.phanLoai] || { color: '#64748b', icon: '•' };
+        const badgeCls = { done: 'bd-done', overdue: 'bd-overdue', urgent: 'bd-urgent', soon: 'bd-soon', inprog: 'bd-inprog', none: 'bd-none' }[status];
+        const badgeLbl = { done: '✅ Hoàn thành', overdue: '🚨 Quá hạn', urgent: '🔴 Cấp bách', soon: '🟡 Sắp đến', inprog: '🔄 Đang làm', none: '⚪ Chưa bắt đầu' }[status];
+
+        // Check if this parent has children in the full list
+        const hasChildren = t.isParent && TASKS.some(c => !c.isParent && c.groupId === t.groupId);
+        const toggleHtml = (t.isParent && hasChildren)
+          ? `<button class="grp-toggle${expanded ? ' expanded' : ''}" data-gid="${t.groupId}" onclick="toggleGroup(event,${t.groupId})" title="${expanded ? 'Thu gọn' : 'Mở rộng'}">${expanded ? '▼' : '▶'}</button>`
+          : `<span class="no-toggle"></span>`;
+
+        const dlHtml = fmtDl(t.deadline, status);
+        const prioHtml = t.uuTien ? `<div class="prio p${t.uuTien}">${t.uuTien}</div>` : '<span style="color:var(--muted)">—</span>';
+        const noteHtml = t.ghiChu ? `<span class="note" title="${escHtml(t.ghiChu)}">${escHtml(t.ghiChu)}</span>` : '<span style="color:var(--muted)">—</span>';
+
+        // Progress for parents
+        let progHtml = '';
+        if (t.isParent) {
+          const children = TASKS.filter(c => !c.isParent && c.groupId === t.groupId);
+          if (children.length > 0) {
+            const cDone = children.filter(c => getStatus(c) === 'done').length;
+            progHtml = ` <span style="color:var(--muted);font-weight:400;font-size:10px">(${cDone}/${children.length})</span>`;
+          }
+        }
+
+        const taskIdx = TASKS.indexOf(t);
+        rows.push(`<tr class="${t.isParent ? 'is-parent' : 'is-child'}" data-gid="${t.groupId}" onclick="openModal(${taskIdx})">
+      <td class="toggle-cell" onclick="event.stopPropagation()">${toggleHtml}</td>
+      <td class="task-name-cell">${escHtml(t.hangMuc)}${progHtml}</td>
+      <td><span class="ctag"><span class="ctag-dot" style="background:${catM.color}"></span>${t.phanLoai}</span></td>
+      <td><span class="badge ${badgeCls}">${badgeLbl}</span></td>
+      <td>${dlHtml}</td>
+      <td>${prioHtml}</td>
+      <td>${noteHtml}</td>
+    </tr>`);
+      });
+
+      tbody.innerHTML = rows.join('') || `<tr><td colspan="7"><div class="empty">⚪ Không có công việc hiển thị ở cấp này</div></td></tr>`;
+    }
+
+    function fmtDl(dl, status) {
+      if (!dl) return '<span style="color:var(--muted)">—</span>';
+      const [y, m, d] = dl.split('-');
+      const readable = `${d}/${m}/${y}`; // Always DD/MM/YYYY for display
+      const today = new Date(); today.setHours(0, 0, 0, 0);
+      const date = new Date(dl); date.setHours(0, 0, 0, 0);
+      const diff = Math.ceil((date - today) / 86400000);
+      let cls = 'dl-norm', days = '';
+      if (status !== 'done') {
+        if (diff < 0) { cls = 'dl-over'; days = `(${Math.abs(diff)}d trước)`; }
+        else if (diff === 0) { cls = 'dl-urg'; days = '(Hôm nay!)'; }
+        else if (diff <= 3) { cls = 'dl-urg'; days = `(còn ${diff}d)`; }
+        else if (diff <= 7) { cls = 'dl-soon'; days = `(còn ${diff}d)`; }
+      }
+      return `<span class="dl ${cls}">${readable} <span class="dl-days">${days}</span></span>`;
+    }
+
+    function escHtml(s) {
+      return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
+
+    /* ════════════════════════════════════════════════════════
+       GROUPING  (Excel-style)
+    ════════════════════════════════════════════════════════ */
+    function setLevel(n) {
+      globalLevel = n;
+      document.getElementById('lvl1').classList.toggle('active', n === 1);
+      document.getElementById('lvl2').classList.toggle('active', n === 2);
+      if (n === 1) expandedGroups.clear();
+      applyFilters();
+    }
+
+    function toggleGroup(event, gid) {
+      event.stopPropagation();
+      if (expandedGroups.has(gid)) {
+        expandedGroups.delete(gid);
+      } else {
+        expandedGroups.add(gid);
+        globalLevel = 1; // Switch to custom mode
+        document.getElementById('lvl1').classList.add('active');
+        document.getElementById('lvl2').classList.remove('active');
+      }
+      applyFilters();
+    }
+
+    /* ════════════════════════════════════════════════════════
+       FILTER HELPERS
+    ════════════════════════════════════════════════════════ */
+    function setPill(el) {
+      filterStatus = el.dataset.s;
+      document.querySelectorAll('.pill').forEach(p => p.classList.toggle('on', p === el));
+      applyFilters();
+    }
+    function setPillByStatus(s) {
+      filterStatus = s;
+      document.querySelectorAll('.pill').forEach(p => p.classList.toggle('on', p.dataset.s === s));
+      applyFilters();
+    }
+
+    /* ════════════════════════════════════════════════════════
+       MODAL
+    ════════════════════════════════════════════════════════ */
+    function openModal(idx) {
+      const t = TASKS[idx];
+      const status = getStatus(t);
+      const catM = CAT_META[t.phanLoai] || { color: '#64748b' };
+      const badgeCls = { done: 'bd-done', overdue: 'bd-overdue', urgent: 'bd-urgent', soon: 'bd-soon', inprog: 'bd-inprog', none: 'bd-none' }[status];
+      const badgeLbl = { done: '✅ Hoàn thành', overdue: '🚨 Quá hạn', urgent: '🔴 Cấp bách', soon: '🟡 Sắp đến', inprog: '🔄 Đang làm', none: '⚪ Chưa bắt đầu' }[status];
+      const prioNames = ['', 'Cao nhất (1)', 'Cao (2)', 'Trung bình (3)', 'Thấp (4)'];
+
+      document.getElementById('mTitle').textContent = t.hangMuc;
+      document.getElementById('mCat').innerHTML =
+        `<span class="ctag"><span class="ctag-dot" style="background:${catM.color}"></span>${escHtml(t.phanLoai)}</span>`;
+      document.getElementById('mStatus').innerHTML = `<span class="badge ${badgeCls}">${badgeLbl}</span>`;
+      document.getElementById('mDl').innerHTML = fmtDl(t.deadline, status) || '—';
+      document.getElementById('mPrio').textContent = t.uuTien ? prioNames[t.uuTien] || t.uuTien : 'Chưa xác định';
+      const noteEl = document.getElementById('mNote');
+      if (t.ghiChu) { noteEl.style.display = 'block'; noteEl.textContent = '📝 ' + t.ghiChu; }
+      else noteEl.style.display = 'none';
+
+      document.getElementById('overlay').classList.add('show');
+    }
+    function closeModal(e) {
+      if (!e || e.target === document.getElementById('overlay')) {
+        document.getElementById('overlay').classList.remove('show');
+      }
+    }
+    document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+    /* ════════════════════════════════════════════════════════
+       BOOT
+    ════════════════════════════════════════════════════════ */
+    document.addEventListener('DOMContentLoaded', () => reloadData());
+  </script>
+</body>
+
+</html>
